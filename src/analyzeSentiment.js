@@ -1,6 +1,3 @@
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-
 /**
  * In this sample, we use the sentiment analysis endpoint to retrieve
  * estimations of document sentiment (positive, negative, or mixed) within some
@@ -21,8 +18,7 @@ dotenv.config();
 
 // You will need to set these environment variables or edit the following values
 const endpoint = "https://samlangserv.cognitiveservices.azure.com/";
-const apiKey =
-  "jc3zyiVdNgv4yr/boOU/aRli1e097jSmcxMw0+PBRCa0vPpdFVKL/rfW7C/jjeJQG+VxI4wnYSMI+AStHEoLjg==";
+const apiKey = "20b2780b393c48839e24ec5b5354ddb3";
 
 const documents = [
   "I had the best day of my life.",
