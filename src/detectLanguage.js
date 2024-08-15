@@ -1,32 +1,19 @@
-/**
- * In this sample, we use the language detection endpoint to determine the
- * written language of several documents written in different languages. The
- * endpoint provides a primary language as well as a score representing the
- * service's confidence in the correctness of its assessment.
- *
- * @summary detects the language of a piece of text
- */
+import PdfTextExtractor from "./utils";
 
-const {
+// const {
+//   TextAnalyticsClient,
+//   AzureKeyCredential,
+// } = require("@azure/ai-text-analytics");
+
+import {
   TextAnalyticsClient,
   AzureKeyCredential,
-} = require("@azure/ai-text-analytics");
+} from "@azure/ai-text-analytics";
+// const dotenv = require("dotenv");
+// dotenv.config();
 
-// Load the .env file if it exists
-const dotenv = require("dotenv");
-dotenv.config();
-
-// You will need to set these environment variables or edit the following values
 const endpoint = "https://samlangserv.cognitiveservices.azure.com/";
 const apiKey = "20b2780b393c48839e24ec5b5354ddb3";
-
-const documents = [
-  "This document is written in English.",
-  "Este es un document escrito en Español.",
-  "这是一个用中文写的文件",
-  "Dies ist ein Dokument in deutsche Sprache.",
-  "Detta är ett dokument skrivet på engelska.",
-];
 
 async function main() {
   console.log("== Detect Language Sample ==");
@@ -36,18 +23,27 @@ async function main() {
     new AzureKeyCredential(apiKey)
   );
 
-  const results = await client.detectLanguage(documents);
+  // Extract the text from the PDF
+  const pdfText = await PdfTextExtractor();
 
-  for (const result of results) {
-    console.log(`- Document ${result.id}`);
-    if (!result.error) {
-      const primaryLanguage = result.primaryLanguage;
-      console.log(
-        `\tDetected language: ${primaryLanguage.name} (ISO 6391 code: ${primaryLanguage.iso6391Name}), Confidence Score is ${primaryLanguage.confidenceScore}`
-      );
-    } else {
-      console.error("\tError:", result.error);
+  if (pdfText) {
+    const documents = [pdfText]; // Use the extracted text as the document for language detection
+
+    const results = await client.detectLanguage(documents);
+
+    for (const result of results) {
+      console.log(`- Document ${result.id}`);
+      if (!result.error) {
+        const primaryLanguage = result.primaryLanguage;
+        console.log(
+          `\tDetected language: ${primaryLanguage.name} (ISO 6391 code: ${primaryLanguage.iso6391Name}), Confidence Score is ${primaryLanguage.confidenceScore}`
+        );
+      } else {
+        console.error("\tError:", result.error);
+      }
     }
+  } else {
+    console.error("Failed to extract text from the PDF.");
   }
 }
 

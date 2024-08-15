@@ -5,6 +5,11 @@ import { ProgressBar } from "primereact/progressbar";
 import { Button } from "primereact/button";
 import { Tooltip } from "primereact/tooltip";
 import { Tag } from "primereact/tag";
+// import AzureStorageBlob from "@azure/storage-blob";
+import {
+  BlobServiceClient,
+  StorageSharedKeyCredential,
+} from "@azure/storage-blob";
 
 export default function TemplateDemo() {
   const toast = useRef(null);
@@ -82,7 +87,6 @@ export default function TemplateDemo() {
     return (
       <div className="flex align-items-center flex-wrap">
         <div className="flex align-items-center" style={{ width: "40%" }}>
-          {/* Render image or PDF icon based on file type */}
           {file.type === "application/pdf" ? (
             <i
               className="pi pi-file-pdf"
@@ -169,8 +173,7 @@ export default function TemplateDemo() {
         name="demo[]"
         url="/api/upload"
         multiple
-        accept="image/*,application/pdf" // Accept images and PDFs
-        // maxFileSize={1000000}
+        accept="image/*,application/pdf"
         onUpload={onTemplateUpload}
         onSelect={onTemplateSelect}
         onError={onTemplateClear}
