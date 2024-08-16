@@ -95,6 +95,22 @@ function PdfTextExtractor() {
     return <div>Loading PDF content...</div>;
   }
 
+  async function uploadPdf(file) {
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+
+    const content = "Hello world!";
+    const blobName = "newblob" + new Date().getTime();
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    const uploadBlobResponse = await blockBlobClient.upload(
+      content,
+      content.length
+    );
+    console.log(
+      `Upload block blob ${blobName} successfully`,
+      uploadBlobResponse.requestId
+    );
+  }
+
   return (
     <div>
       <h2>Extracted PDF Text</h2>

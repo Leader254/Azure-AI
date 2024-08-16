@@ -5,11 +5,21 @@ import { ProgressBar } from "primereact/progressbar";
 import { Button } from "primereact/button";
 import { Tooltip } from "primereact/tooltip";
 import { Tag } from "primereact/tag";
-// import AzureStorageBlob from "@azure/storage-blob";
 import {
   BlobServiceClient,
   StorageSharedKeyCredential,
 } from "@azure/storage-blob";
+
+const account = "filestorage2024sam";
+const accountKey =
+  "jc3zyiVdNgv4yr/boOU/aRli1e097jSmcxMw0+PBRCa0vPpdFVKL/rfW7C/jjeJQG+VxI4wnYSMI+AStHEoLjg==";
+const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
+const blobServiceClient = new BlobServiceClient(
+  `https://${account}.blob.core.windows.net`,
+  sharedKeyCredential
+);
+
+const containerName = "azure-lang";
 
 export default function TemplateDemo() {
   const toast = useRef(null);
@@ -152,12 +162,46 @@ export default function TemplateDemo() {
     iconOnly: true,
     className:
       "custom-upload-btn p-button-success p-button-rounded p-button-outlined",
+    onclick: () => {
+      console.log("Clicked to upload");
+    },
   };
   const cancelOptions = {
     icon: "pi pi-fw pi-times",
     iconOnly: true,
     className:
       "custom-cancel-btn p-button-danger p-button-rounded p-button-outlined",
+  };
+
+  const uploadPdf = async (file) => {
+    try {
+      const containerClient =
+        blobServiceClient.getContainerClient(containerName);
+      const blobName = "pdf-" + new Date().getTime() + ".pdf";
+      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+      const uploadBlobResponse = await blockBlobClient.uploadBrowserData(file);
+      console.log(
+        `Upload block blob ${blobName} successfully`,
+        uploadBlobResponse.requestId
+      );
+
+      toast.current.show({
+        severity: "success",
+        summary: "Success",
+        detail: "PDF uploaded successfully!",
+      });
+
+      return blobName;
+    } catch (err) {
+      console.error("Error uploading PDF:", err);
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Failed to upload PDF",
+      });
+      return null;
+    }
   };
 
   return (
@@ -171,10 +215,11 @@ export default function TemplateDemo() {
       <FileUpload
         ref={fileUploadRef}
         name="demo[]"
-        url="/api/upload"
+        // url="/api/upload"
+        onUpload={uploadPdf}
         multiple
         accept="image/*,application/pdf"
-        onUpload={onTemplateUpload}
+        // onUpload={onTemplateUpload}
         onSelect={onTemplateSelect}
         onError={onTemplateClear}
         onClear={onTemplateClear}
