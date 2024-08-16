@@ -5,26 +5,14 @@ import { ProgressBar } from "primereact/progressbar";
 import { Button } from "primereact/button";
 import { Tooltip } from "primereact/tooltip";
 import { Tag } from "primereact/tag";
-import {
-  BlobServiceClient,
-  StorageSharedKeyCredential,
-} from "@azure/storage-blob";
-
-const account = "filestorage2024sam";
-const accountKey =
-  "jc3zyiVdNgv4yr/boOU/aRli1e097jSmcxMw0+PBRCa0vPpdFVKL/rfW7C/jjeJQG+VxI4wnYSMI+AStHEoLjg==";
-const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
-const blobServiceClient = new BlobServiceClient(
-  `https://${account}.blob.core.windows.net`,
-  sharedKeyCredential
-);
-
-const containerName = "azure-lang";
+import axios from "axios";
 
 export default function TemplateDemo() {
   const toast = useRef(null);
   const [totalSize, setTotalSize] = useState(0);
   const fileUploadRef = useRef(null);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [extractedText, setExtractedText] = useState("");
 
   const onTemplateSelect = (e) => {
     let _totalSize = totalSize;
@@ -37,19 +25,61 @@ export default function TemplateDemo() {
     setTotalSize(_totalSize);
   };
 
-  const onTemplateUpload = (e) => {
-    let _totalSize = 0;
+  const onTemplateUpload = async (e) => {
+    let file = e.files[0];
 
-    e.files.forEach((file) => {
-      _totalSize += file.size || 0;
-    });
+    if (!file) return;
 
-    setTotalSize(_totalSize);
-    toast.current.show({
-      severity: "info",
-      summary: "Success",
-      detail: "File Uploaded",
-    });
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/pdf/upload",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("response,", response);
+      setUploadedFile(file);
+      setTotalSize(0);
+
+      toast.current.show({
+        severity: "info",
+        summary: "Success",
+        detail: "File Uploaded Successfully",
+      });
+    } catch (err) {
+      console.error("Error uploading file:", err);
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: "File Upload Failed",
+      });
+    }
+  };
+
+  const extractTextFromPdf = async () => {
+    try {
+      const response = await axios.get("/api/pdf/extract");
+      setExtractedText(response.data.text);
+      toast.current.show({
+        severity: "info",
+        summary: "Success",
+        detail: "Text Extracted Successfully",
+      });
+    } catch (err) {
+      console.error("Error extracting text:", err);
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Text Extraction Failed",
+      });
+    }
   };
 
   const onTemplateRemove = (file, callback) => {
@@ -64,10 +94,9 @@ export default function TemplateDemo() {
   const headerTemplate = (options) => {
     const { className, chooseButton, uploadButton, cancelButton } = options;
     const value = totalSize / 100000;
-    const formatedValue =
-      fileUploadRef && fileUploadRef.current
-        ? fileUploadRef.current.formatSize(totalSize)
-        : "0 B";
+    const formattedValue = fileUploadRef.current
+      ? fileUploadRef.current.formatSize(totalSize)
+      : "0 B";
 
     return (
       <div
@@ -82,7 +111,7 @@ export default function TemplateDemo() {
         {uploadButton}
         {cancelButton}
         <div className="flex align-items-center gap-3 ml-auto">
-          <span>{formatedValue} / 10 MB</span>
+          <span>{formattedValue} / 10 MB</span>
           <ProgressBar
             value={value}
             showValue={false}
@@ -157,15 +186,14 @@ export default function TemplateDemo() {
     iconOnly: true,
     className: "custom-choose-btn p-button-rounded p-button-outlined",
   };
+
   const uploadOptions = {
     icon: "pi pi-fw pi-cloud-upload",
     iconOnly: true,
     className:
       "custom-upload-btn p-button-success p-button-rounded p-button-outlined",
-    onclick: () => {
-      console.log("Clicked to upload");
-    },
   };
+
   const cancelOptions = {
     icon: "pi pi-fw pi-times",
     iconOnly: true,
@@ -173,63 +201,45 @@ export default function TemplateDemo() {
       "custom-cancel-btn p-button-danger p-button-rounded p-button-outlined",
   };
 
-  const uploadPdf = async (file) => {
-    try {
-      const containerClient =
-        blobServiceClient.getContainerClient(containerName);
-      const blobName = "pdf-" + new Date().getTime() + ".pdf";
-      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-
-      const uploadBlobResponse = await blockBlobClient.uploadBrowserData(file);
-      console.log(
-        `Upload block blob ${blobName} successfully`,
-        uploadBlobResponse.requestId
-      );
-
-      toast.current.show({
-        severity: "success",
-        summary: "Success",
-        detail: "PDF uploaded successfully!",
-      });
-
-      return blobName;
-    } catch (err) {
-      console.error("Error uploading PDF:", err);
-      toast.current.show({
-        severity: "error",
-        summary: "Error",
-        detail: "Failed to upload PDF",
-      });
-      return null;
-    }
-  };
-
   return (
     <div>
       <Toast ref={toast}></Toast>
 
-      <Tooltip target=".custom-choose-btn" content="Choose" position="bottom" />
+      {/* <Tooltip target=".custom-choose-btn" content="Choose" position="bottom" />
       <Tooltip target=".custom-upload-btn" content="Upload" position="bottom" />
-      <Tooltip target=".custom-cancel-btn" content="Clear" position="bottom" />
+      <Tooltip target=".custom-cancel-btn" content="Clear" position="bottom" /> */}
 
       <FileUpload
         ref={fileUploadRef}
         name="demo[]"
-        // url="/api/upload"
-        onUpload={uploadPdf}
-        multiple
-        accept="image/*,application/pdf"
-        // onUpload={onTemplateUpload}
         onSelect={onTemplateSelect}
-        onError={onTemplateClear}
         onClear={onTemplateClear}
+        multiple={false}
+        uploadHandler={onTemplateUpload}
+        accept="application/pdf"
         headerTemplate={headerTemplate}
         itemTemplate={itemTemplate}
         emptyTemplate={emptyTemplate}
+        customUpload={true}
         chooseOptions={chooseOptions}
         uploadOptions={uploadOptions}
         cancelOptions={cancelOptions}
       />
+
+      <Button
+        label="Extract Text from PDF"
+        icon="pi pi-file"
+        className="p-button-success mt-4"
+        onClick={extractTextFromPdf}
+        disabled={!uploadedFile}
+      />
+
+      {extractedText && (
+        <div className="mt-4">
+          <h3>Extracted Text:</h3>
+          <p>{extractedText}</p>
+        </div>
+      )}
     </div>
   );
 }

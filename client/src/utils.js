@@ -98,7 +98,7 @@ function PdfTextExtractor() {
   async function uploadPdf(file) {
     const containerClient = blobServiceClient.getContainerClient(containerName);
 
-    const content = "Hello world!";
+    const content = {}; // content from front end;
     const blobName = "newblob" + new Date().getTime();
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     const uploadBlobResponse = await blockBlobClient.upload(
