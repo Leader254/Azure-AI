@@ -16,8 +16,6 @@ const account = process.env.AZURE_STORAGE_ACCOUNT;
 const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY;
 const apiKey = process.env.AZURE_API_KEY;
 const endpoint = process.env.AZURE_ENDPOINT;
-// const sasToken =
-//   "sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupiytfx&se=2024-08-17T01:52:04Z&st=2024-08-16T17:52:04Z&spr=https&sig=WbVlDjlkTginy0oNy1SPJIxU1O44r%2FnOzfsM8R6RfRI%3D";
 const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME;
 const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
 const blobServiceClient = new BlobServiceClient(
@@ -272,7 +270,7 @@ exports.recognizeLinkedEntities = async (req, res) => {
         }
       });
 
-      res.status(200).json(response);
+      res.status(200).json(response[0]); // Return the first document's results
     } else {
       res
         .status(400)
