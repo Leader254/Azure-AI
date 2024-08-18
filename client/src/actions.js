@@ -105,13 +105,13 @@ export default function LanguageActions() {
         const response = await axios.get(
           "http://localhost:5000/api/pdf/entities"
         );
-        console.log("response", response);
+        console.log("response", response.data.entities);
         setAnalysisInfo({
           text: null,
           languageDetection: null,
           sentimentAnalysis: null,
           keyPhrases: null,
-          linkedEntities: response.data || [],
+          linkedEntities: response.data.entities || [],
         });
         console.log(response.data);
       } catch (error) {
@@ -134,7 +134,7 @@ export default function LanguageActions() {
 
   return (
     <div>
-      <TabMenu model={items} onTabChange={handleTabChange} />
+      <TabMenu model={items} onTabChange={handleTabChange} className="mt-3" />
 
       <div className="card">
         {analysisInfo.text && (
@@ -147,7 +147,6 @@ export default function LanguageActions() {
           <Card title="Language Detection Result">
             {analysisInfo.languageDetection.length > 0 ? (
               <p className="m-0">
-                {analysisInfo.languageDetection[0].detectedLanguage} <br />
                 <strong>ISO 6391 Code:</strong>{" "}
                 {analysisInfo.languageDetection[0].iso6391Code} <br />
                 <strong>Confidence Score:</strong>{" "}
@@ -198,9 +197,11 @@ export default function LanguageActions() {
                     <strong>Key Phrases:</strong>
                   </p>
                   {result.keyPhrases.length > 0 ? (
-                    <ul>
+                    <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
                       {result.keyPhrases.map((phrase, idx) => (
-                        <li key={idx}>{phrase}</li>
+                        <li key={idx} style={{ paddingBottom: "4px" }}>
+                          {phrase}
+                        </li>
                       ))}
                     </ul>
                   ) : (
@@ -217,15 +218,43 @@ export default function LanguageActions() {
         {analysisInfo.linkedEntities && (
           <Card title="Linked Entities Results">
             {analysisInfo.linkedEntities.length > 0 ? (
-              <p className="m-0">
-                {analysisInfo.languageDetection[0].detectedLanguage} <br />
-                <strong>ISO 6391 Code:</strong>{" "}
-                {analysisInfo.languageDetection[0].iso6391Code} <br />
-                <strong>Confidence Score:</strong>{" "}
-                {analysisInfo.languageDetection[0].confidenceScore}
-              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
+                {analysisInfo.linkedEntities.map((entity, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      flex: "1 1 300px",
+                      minWidth: "300px",
+                      border: "1px solid #ccc",
+                      padding: "16px",
+                      borderRadius: "8px",
+                    }}
+                  >
+                    <div className="m-0">
+                      <strong>Entity:</strong> {entity.name} <br />
+                      <strong>Data Source:</strong> {entity.dataSource} <br />
+                      <strong>URL:</strong>{" "}
+                      <a
+                        href={entity.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {entity.url}
+                      </a>
+                      <br />
+                      {entity.matches.map((match, matchIndex) => (
+                        <div key={matchIndex}>
+                          <strong>Matched Text:</strong> {match.text} <br />
+                          <strong>Confidence Score:</strong>{" "}
+                          {match.confidenceScore}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <p className="m-0">No linked entities detected.</p>
+              <div className="m-0">No linked entities detected.</div>
             )}
           </Card>
         )}
