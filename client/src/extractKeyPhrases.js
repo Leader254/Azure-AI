@@ -14,9 +14,8 @@ const {
 const dotenv = require("dotenv");
 dotenv.config();
 
-// You will need to set these environment variables or edit the following values
-const endpoint = process.env["ENDPOINT"] || "<cognitive services endpoint>";
-const apiKey = process.env["TEXT_ANALYTICS_API_KEY"] || "<api key>";
+const endpoint = "https://samlangserv.cognitiveservices.azure.com/";
+const apiKey = "20b2780b393c48839e24ec5b5354ddb3";
 
 const documents = [
   "Redmond is a city in King County, Washington, United States, located 15 miles east of Seattle.",

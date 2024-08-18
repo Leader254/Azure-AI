@@ -3,18 +3,23 @@ import { Toast } from "primereact/toast";
 import { FileUpload } from "primereact/fileupload";
 import { ProgressBar } from "primereact/progressbar";
 import { Button } from "primereact/button";
-import { Tooltip } from "primereact/tooltip";
 import { Tag } from "primereact/tag";
 import axios from "axios";
+import { Fieldset } from "primereact/fieldset";
+import LanguageActions from "./actions";
+import { Panel } from "primereact/panel";
 
 export default function TemplateDemo() {
   const toast = useRef(null);
-  const [totalSize, setTotalSize] = useState(0);
   const fileUploadRef = useRef(null);
+  const [totalSize, setTotalSize] = useState(0);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [extractedText, setExtractedText] = useState("");
+  const ref = useRef(null);
+  const [hasDocument, setHasDocument] = useState(false);
 
   const onTemplateSelect = (e) => {
+    setHasDocument(true);
     let _totalSize = totalSize;
     let files = e.files;
 
@@ -46,6 +51,7 @@ export default function TemplateDemo() {
 
       console.log("response,", response);
       setUploadedFile(file);
+      setHasDocument(false); // Reset document flag after upload
       setTotalSize(0);
 
       toast.current.show({
@@ -65,7 +71,7 @@ export default function TemplateDemo() {
 
   const extractTextFromPdf = async () => {
     try {
-      const response = await axios.get("/api/pdf/extract");
+      const response = await axios.get("http://localhost:5000/api/pdf/extract");
       setExtractedText(response.data.text);
       toast.current.show({
         severity: "info",
@@ -82,13 +88,35 @@ export default function TemplateDemo() {
     }
   };
 
+  const getLatestBlob = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/pdf/latest");
+      const { text } = response.data;
+      setExtractedText(text);
+      toast.current.show({
+        severity: "info",
+        summary: "Success",
+        detail: "Latest Blob Text Extracted Successfully",
+      });
+    } catch (err) {
+      console.error("Error getting latest blob:", err);
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Failed to Get Latest Blob",
+      });
+    }
+  };
+
   const onTemplateRemove = (file, callback) => {
     setTotalSize(totalSize - file.size);
+    setHasDocument(false);
     callback();
   };
 
   const onTemplateClear = () => {
     setTotalSize(0);
+    setHasDocument(false);
   };
 
   const headerTemplate = (options) => {
@@ -202,44 +230,51 @@ export default function TemplateDemo() {
   };
 
   return (
-    <div>
-      <Toast ref={toast}></Toast>
+    <>
+      <div>
+        <Toast ref={toast}></Toast>
 
-      {/* <Tooltip target=".custom-choose-btn" content="Choose" position="bottom" />
-      <Tooltip target=".custom-upload-btn" content="Upload" position="bottom" />
-      <Tooltip target=".custom-cancel-btn" content="Clear" position="bottom" /> */}
+        <FileUpload
+          ref={fileUploadRef}
+          name="demo[]"
+          onSelect={onTemplateSelect}
+          onClear={onTemplateClear}
+          multiple={false}
+          uploadHandler={onTemplateUpload}
+          accept="application/pdf"
+          headerTemplate={headerTemplate}
+          itemTemplate={itemTemplate}
+          emptyTemplate={emptyTemplate}
+          customUpload={true}
+          chooseOptions={chooseOptions}
+          uploadOptions={uploadOptions}
+          cancelOptions={cancelOptions}
+        />
 
-      <FileUpload
-        ref={fileUploadRef}
-        name="demo[]"
-        onSelect={onTemplateSelect}
-        onClear={onTemplateClear}
-        multiple={false}
-        uploadHandler={onTemplateUpload}
-        accept="application/pdf"
-        headerTemplate={headerTemplate}
-        itemTemplate={itemTemplate}
-        emptyTemplate={emptyTemplate}
-        customUpload={true}
-        chooseOptions={chooseOptions}
-        uploadOptions={uploadOptions}
-        cancelOptions={cancelOptions}
-      />
+        <Button
+          label="Extract Text from PDF"
+          icon="pi pi-file"
+          className="p-button-success mt-4"
+          onClick={extractTextFromPdf}
+          disabled={!uploadedFile}
+        />
 
-      <Button
-        label="Extract Text from PDF"
-        icon="pi pi-file"
-        className="p-button-success mt-4"
-        onClick={extractTextFromPdf}
-        disabled={!uploadedFile}
-      />
-
+        <Button
+          label="Get Latest Blob"
+          icon="pi pi-refresh"
+          className="p-button-info mt-4 ml-4"
+          onClick={getLatestBlob}
+          disabled={hasDocument}
+        />
+      </div>
       {extractedText && (
-        <div className="mt-4">
-          <h3>Extracted Text:</h3>
-          <p>{extractedText}</p>
-        </div>
+        <>
+          <Panel ref={ref} header="Extrated Text" className="mt-4" toggleable>
+            <p className="m-0">{extractedText}</p>
+          </Panel>
+          <LanguageActions />
+        </>
       )}
-    </div>
+    </>
   );
 }
